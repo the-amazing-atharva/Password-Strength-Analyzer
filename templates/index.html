@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Advanced Password Security Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="/static/script.js"></script>
+  </head>
+
+  <body
+    class="bg-gradient-to-br from-indigo-900 via-purple-900 to-black min-h-screen text-white"
+  >
+    <div class="container mx-auto p-8">
+      <h1 class="text-4xl font-bold text-center mb-10">
+        🔐 Advanced Password Security Tool
+      </h1>
+
+      <!-- PASSWORD ANALYZER -->
+      <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10">
+        <h2 class="text-2xl font-semibold mb-4">Password Analyzer</h2>
+        <div class="flex gap-3">
+          <input
+            type="password"
+            id="passwordInput"
+            class="w-full p-3 rounded-xl bg-white/20 focus:outline-none"
+            placeholder="Enter password..."
+            oninput="analyzePassword()"
+          />
+          <button
+            onclick="toggleVisibility()"
+            class="px-4 bg-indigo-600 rounded-xl"
+          >
+            👁
+          </button>
+        </div>
+
+        <!-- Strength Bar -->
+        <div class="mt-6">
+          <div class="w-full bg-gray-700 rounded-full h-4">
+            <div
+              id="strengthBar"
+              class="h-4 rounded-full transition-all duration-500"
+              style="width: 0%"
+            ></div>
+          </div>
+          <p id="strengthText" class="mt-2 text-lg"></p>
+        </div>
+
+        <!-- Analysis Results -->
+        <div id="analysisResults" class="mt-6 text-sm space-y-2"></div>
+      </div>
+
+      <!-- PASSWORD GENERATOR -->
+      <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10">
+        <h2 class="text-2xl font-semibold mb-4">Password Generator</h2>
+        <div class="flex gap-4 mb-4 flex-wrap items-center">
+          <input
+            type="number"
+            id="length"
+            value="16"
+            class="p-2 rounded bg-white/20 w-24"
+          />
+          <label
+            ><input type="checkbox" id="uppercase" checked /> Uppercase</label
+          >
+          <label
+            ><input type="checkbox" id="lowercase" checked /> Lowercase</label
+          >
+          <label><input type="checkbox" id="numbers" checked /> Numbers</label>
+          <label><input type="checkbox" id="special" checked /> Special</label>
+          <label
+            ><input type="checkbox" id="excludeAmbiguous" /> Exclude
+            Ambiguous</label
+          >
+          <button
+            onclick="generatePassword()"
+            class="px-6 py-2 bg-green-600 rounded-xl hover:bg-green-500"
+          >
+            Generate
+          </button>
+        </div>
+
+        <div class="flex gap-3 mb-4">
+          <input
+            type="text"
+            id="generatedPassword"
+            class="w-full p-3 rounded-xl bg-white/20"
+            readonly
+          />
+          <button onclick="copyPassword()" class="px-4 bg-blue-600 rounded-xl">
+            📋
+          </button>
+        </div>
+      </div>
+
+      <!-- PASSPHRASE GENERATOR -->
+      <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl">
+        <h2 class="text-2xl font-semibold mb-4">Passphrase Generator</h2>
+        <div class="flex gap-3 mb-4 flex-wrap items-center">
+          <input
+            type="number"
+            id="words"
+            value="4"
+            class="p-2 rounded bg-white/20 w-24"
+          />
+          <input
+            type="text"
+            id="separator"
+            value="-"
+            class="p-2 rounded bg-white/20 w-24"
+          />
+          <label
+            ><input type="checkbox" id="capitalize" /> Capitalize Words</label
+          >
+          <label
+            ><input type="checkbox" id="includeNumber" /> Include Number</label
+          >
+          <button
+            onclick="generatePassphrase()"
+            class="px-6 py-2 bg-purple-600 rounded-xl hover:bg-purple-500"
+          >
+            Generate
+          </button>
+        </div>
+
+        <div class="flex gap-3">
+          <input
+            type="text"
+            id="generatedPassphrase"
+            class="w-full p-3 rounded-xl bg-white/20"
+            readonly
+          />
+          <button
+            onclick="copyPassphrase()"
+            class="px-4 bg-blue-600 rounded-xl"
+          >
+            📋
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
