@@ -1,14 +1,22 @@
 from flask import Flask, render_template, request, jsonify
 from password_tool import EnterprisePasswordAnalyzer, EnterprisePasswordGenerator
+import hashlib
+import requests
 
 app = Flask(__name__)
 
 
+# ==========================================================
+# HOME
+# ==========================================================
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
+# ==========================================================
+# PASSWORD ANALYZER
+# ==========================================================
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.json
@@ -23,6 +31,9 @@ def analyze():
     return jsonify(analysis)
 
 
+# ==========================================================
+# PASSWORD GENERATOR
+# ==========================================================
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.json
@@ -46,6 +57,9 @@ def generate():
     return jsonify({"password": password})
 
 
+# ==========================================================
+# PASSPHRASE GENERATOR
+# ==========================================================
 @app.route("/passphrase", methods=["POST"])
 def passphrase():
     data = request.json
@@ -64,5 +78,39 @@ def passphrase():
     return jsonify({"passphrase": phrase})
 
 
+# ==========================================================
+# PWNED PASSWORD / BREACH CHECK
+# ==========================================================
+@app.route("/pwned", methods=["POST"])
+def pwned():
+    data = request.json
+    password = data.get("password", "")
+
+    if not password:
+        return jsonify({"error": "Password is required"}), 400
+
+    # SHA1 hash of the password
+    sha1 = hashlib.sha1(password.encode("utf-8")).hexdigest().upper()
+    prefix, suffix = sha1[:5], sha1[5:]
+
+    # Query HIBP API using k-Anonymity (first 5 chars of SHA1)
+    res = requests.get(f"https://api.pwnedpasswords.com/range/{prefix}")
+    if res.status_code != 200:
+        return jsonify({"error": "HIBP API error"}), 500
+
+    # Check if the suffix exists in the response
+    count = 0
+    for line in res.text.splitlines():
+        h, c = line.split(":")
+        if h == suffix:
+            count = int(c)
+            break
+
+    return jsonify({"pwned": count > 0, "count": count})
+
+
+# ==========================================================
+# MAIN
+# ==========================================================
 if __name__ == "__main__":
     app.run(debug=True)

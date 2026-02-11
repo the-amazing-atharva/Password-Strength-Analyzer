@@ -1,3 +1,6 @@
+// ==========================================================
+// PASSWORD ANALYZER
+// ==========================================================
 async function analyzePassword() {
   const password = document.getElementById("passwordInput").value;
   if (!password) return;
@@ -42,9 +45,6 @@ async function analyzePassword() {
     <p>⏱ <strong>Estimated Crack Times:</strong></p>
   `;
 
-  // -------------------------
-  // Dynamically list crack times
-  // -------------------------
   const crackTimesUL = document.createElement("ul");
   crackTimesUL.className = "ml-4 list-disc";
 
@@ -52,16 +52,12 @@ async function analyzePassword() {
     const li = document.createElement("li");
     const name = key
       .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize words
+      .replace(/\b\w/g, (c) => c.toUpperCase());
     li.textContent = `${name}: ${value}`;
     crackTimesUL.appendChild(li);
   }
-
   results.appendChild(crackTimesUL);
 
-  // -------------------------
-  // Patterns detected
-  // -------------------------
   results.innerHTML += `
     <p>⚠ <strong>Patterns Detected:</strong></p>
     <ul class="ml-4 list-disc">
@@ -79,6 +75,48 @@ async function analyzePassword() {
   `;
 }
 
+// ==========================================================
+// PWNED / BREACH CHECK (IMPROVED COLORS)
+// ==========================================================
+async function checkPwnedPassword(password) {
+  const warningEl = document.getElementById("pwnedWarning");
+  if (!password) {
+    warningEl.innerText = "";
+    warningEl.className = "";
+    return;
+  }
+
+  warningEl.innerText = "Checking...";
+  warningEl.className = "mt-2 text-white font-semibold"; // neutral white while checking
+
+  try {
+    const response = await fetch("/pwned", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await response.json();
+
+    if (data.pwned) {
+      warningEl.innerHTML = `⚠ This password has appeared in breaches <strong>${data.count}</strong> times!`;
+      warningEl.className =
+        "mt-2 font-bold text-white bg-red-700/50 p-2 rounded-xl animate-pulse";
+    } else {
+      warningEl.innerHTML = "✅ This password was not found in known breaches.";
+      warningEl.className =
+        "mt-2 font-semibold text-white bg-green-700/50 p-2 rounded-xl";
+    }
+  } catch (err) {
+    warningEl.innerHTML = "⚠ Error checking password!";
+    warningEl.className =
+      "mt-2 font-semibold text-white bg-yellow-700/50 p-2 rounded-xl";
+  }
+}
+
+// ==========================================================
+// PASSWORD GENERATOR
+// ==========================================================
 async function generatePassword() {
   const length = document.getElementById("length").value;
   const use_uppercase = document.getElementById("uppercase").checked;

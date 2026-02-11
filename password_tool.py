@@ -4,6 +4,8 @@ import secrets
 import math
 import re
 from datetime import datetime
+import hashlib
+import requests  # NEW: for breach check
 
 
 # ==========================================================
@@ -275,13 +277,11 @@ class EnterprisePasswordAnalyzer:
             seconds = guesses / rate
             results[name] = self._format_time(seconds)
 
-        # -----------------------------
         # Classic GPU brute-force
-        # -----------------------------
         charset_size = self.calculate_charset_size()
         if charset_size > 0:
             total_combinations = charset_size ** self.length
-            seconds_gpu = total_combinations / 10_000_000_000  # 10B guesses/sec
+            seconds_gpu = total_combinations / 10_000_000_000
             results["classic_gpu_bruteforce"] = self._format_time(seconds_gpu)
         else:
             results["classic_gpu_bruteforce"] = "Instant"
@@ -289,16 +289,38 @@ class EnterprisePasswordAnalyzer:
         return results
 
     # ------------------------------------------------------
+    # BREACH CHECK USING HAVE I BEEN PWNED
+    # ------------------------------------------------------
+
+    def check_pwned_password(self) -> int:
+        """
+        Returns number of times password appears in breaches.
+        0 = safe, -1 = API error.
+        """
+        sha1 = hashlib.sha1(self.password.encode("utf-8")).hexdigest().upper()
+        prefix = sha1[:5]
+        suffix = sha1[5:]
+        url = f"https://api.pwnedpasswords.com/range/{prefix}"
+        try:
+            res = requests.get(url, timeout=5)
+            if res.status_code != 200:
+                return -1
+            hashes = res.text.splitlines()
+            for line in hashes:
+                h, count = line.split(":")
+                if h == suffix:
+                    return int(count)
+            return 0
+        except requests.RequestException:
+            return -1
+
+    # ------------------------------------------------------
     # ENTERPRISE SCORING (0–100)
     # ------------------------------------------------------
 
     def calculate_strength_score(self) -> Tuple[int, str]:
-
         entropy = self.effective_entropy()
-
-        # Map entropy range (0–120+) into 0–100 scale
         score = min(100, int((entropy / 120) * 100))
-
         if score < 20:
             rating = "VERY WEAK"
         elif score < 40:
@@ -311,15 +333,15 @@ class EnterprisePasswordAnalyzer:
             rating = "VERY STRONG"
         else:
             rating = "EXCELLENT"
-
         return score, rating
 
-     # ------------------------------------------------------
+    # ------------------------------------------------------
     # FULL ENTERPRISE REPORT
     # ------------------------------------------------------
 
     def get_full_analysis(self) -> Dict:
         score, rating = self.calculate_strength_score()
+        pwned_count = self.check_pwned_password()  # NEW
 
         return {
             "password": self.password,
@@ -347,16 +369,16 @@ class EnterprisePasswordAnalyzer:
             },
             "score": score,
             "rating": rating,
-            "crack_time_estimates": self.crack_time_estimates()
+            "crack_time_estimates": self.crack_time_estimates(),
+            "pwned_count": pwned_count  # NEW
         }
 
 
 # ==========================================================
-# ENTERPRISE PASSWORD GENERATOR (ADVANCED)
+# ENTERPRISE PASSWORD GENERATOR (UNCHANGED)
 # ==========================================================
 
 class EnterprisePasswordGenerator:
-
     @staticmethod
     def generate_password(
         length: int = 16,
@@ -366,10 +388,8 @@ class EnterprisePasswordGenerator:
         use_special: bool = True,
         exclude_ambiguous: bool = False
     ) -> str:
-
         if length < 4:
             raise ValueError("Password length must be at least 4.")
-
         chars = ""
         if use_lowercase:
             chars += string.ascii_lowercase
@@ -379,16 +399,12 @@ class EnterprisePasswordGenerator:
             chars += string.digits
         if use_special:
             chars += "!@#$%^&*()_+-=[]{}|;:,.<>?"
-
         if not chars:
             raise ValueError("At least one character set required.")
-
         if exclude_ambiguous:
             ambiguous = "O0l1I|"
             chars = ''.join(c for c in chars if c not in ambiguous)
-
         password = []
-
         if use_lowercase:
             password.append(secrets.choice(string.ascii_lowercase))
         if use_uppercase:
@@ -397,12 +413,9 @@ class EnterprisePasswordGenerator:
             password.append(secrets.choice(string.digits))
         if use_special:
             password.append(secrets.choice("!@#$%^&*()_+-=[]{}|;:,.<>?"))
-
         for _ in range(length - len(password)):
             password.append(secrets.choice(chars))
-
         secrets.SystemRandom().shuffle(password)
-
         return ''.join(password)
 
     @staticmethod
@@ -412,7 +425,6 @@ class EnterprisePasswordGenerator:
         capitalize: bool = False,
         include_number: bool = False
     ) -> str:
-
         words = [
             "alpha", "bravo", "charlie", "delta", "echo",
             "foxtrot", "golf", "hotel", "india", "juliet",
@@ -423,15 +435,10 @@ class EnterprisePasswordGenerator:
             "secure", "shield", "guard", "protect",
             "fortress", "vault", "lock", "token"
         ]
-
         selected = [secrets.choice(words) for _ in range(num_words)]
-
         if capitalize:
             selected = [w.capitalize() for w in selected]
-
         phrase = separator.join(selected)
-
         if include_number:
             phrase += str(secrets.randbelow(100))
-
         return phrase
