@@ -393,6 +393,67 @@ async function generatePassphrase() {
   });
 }
 
+// Add these to your existing script.js
+
+function togglePassphraseInfo() {
+  const info = document.getElementById("passphraseInfo");
+  info.classList.toggle("hidden");
+}
+
+async function generatePassphrase() {
+  const res = await fetch("/passphrase", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      words: document.getElementById("words").value,
+      separator: document.getElementById("separator").value,
+      capitalize: document.getElementById("capitalize").checked,
+      include_number: document.getElementById("includeNumber").checked,
+    }),
+  });
+
+  const data = await res.json();
+
+  // Update text field
+  document.getElementById("generatedPassphrase").value = data.phrase;
+
+  // Reveal metrics
+  document.getElementById("passphraseMetrics").classList.remove("hidden");
+
+  // Update Pronounceability UI
+  document.getElementById("pronounceScore").innerText =
+    data.pronounceability + "%";
+  document.getElementById("pronounceBar").style.width =
+    data.pronounceability + "%";
+
+  // Build Dice Visualization
+  const diceContainer = document.getElementById("diceVisualizer");
+  diceContainer.innerHTML = "";
+  const diceIcons = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+  data.dice_data.forEach((item) => {
+    const row = document.createElement("div");
+    row.className =
+      "flex items-center gap-4 bg-white/5 p-2 rounded-lg border border-white/5 hover:bg-white/10 transition-colors";
+
+    const wordLabel = document.createElement("span");
+    wordLabel.className = "w-24 font-bold text-purple-300 font-mono";
+    wordLabel.innerText = item.word;
+
+    const diceGroup = document.createElement("div");
+    diceGroup.className = "flex gap-1 text-xl text-white/60";
+    item.rolls.forEach((val) => {
+      const die = document.createElement("span");
+      die.innerText = diceIcons[val];
+      diceGroup.appendChild(die);
+    });
+
+    row.appendChild(wordLabel);
+    row.appendChild(diceGroup);
+    diceContainer.appendChild(row);
+  });
+}
+
 // ==========================================================
 // UTILITIES (UPDATED)
 // ==========================================================

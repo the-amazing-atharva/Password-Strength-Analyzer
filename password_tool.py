@@ -567,15 +567,3 @@ class EnterprisePasswordGenerator:
 
         secrets.SystemRandom().shuffle(password)
         return ''.join(password)
-
-    # @staticmethod
-    # def generate_passphrase(num_words=4, separator="-", capitalize=False, include_number=False) -> str:
-    #     words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima", "mike", "november", "oscar", "papa", "quebec", "romeo",
-    #              "sierra", "tango", "uniform", "victor", "whiskey", "xray", "yankee", "zulu", "cipher", "encrypt", "secure", "shield", "guard", "protect", "fortress", "vault", "lock", "token"]
-    #     selected = [secrets.choice(words) for _ in range(num_words)]
-    #     if capitalize:
-    #         selected = [w.capitalize() for w in selected]
-    #     phrase = separator.join(selected)
-    #     if include_number:
-    #         phrase += str(secrets.randbelow(100))
-    #     return phrase
