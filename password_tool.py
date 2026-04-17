@@ -385,13 +385,24 @@ class EnterprisePasswordAnalyzer:
 
     def get_full_analysis(self) -> Dict:
         score, rating = self.calculate_strength_score()
+        eff_entropy = self.effective_entropy()
+
+        # Feature 7: Benchmarks for Chart.js Comparison
+        benchmarks = {
+            "Your Password": eff_entropy,
+            "NIST Minimum": 40,
+            "Enterprise Standard": 60,
+            "Military Grade": 80
+        }
+
         return {
             "password": self.password,
             "score": score,
             "rating": rating,
             "shannon_entropy": round(self.shannon_entropy(), 2),
             "theoretical_entropy": round(self.theoretical_entropy(), 2),
-            "effective_entropy": self.effective_entropy(),
+            "effective_entropy": eff_entropy,
+            "chart_data": benchmarks,  # <--- Added this
             "length": self.length,
             "charset_size": self.calculate_charset_size(),
             "unique_chars": len(set(self.password)),
@@ -412,10 +423,10 @@ class EnterprisePasswordAnalyzer:
             "attacker_analysis": self.get_zxcvbn_score()
         }
 
-
 # ==========================================================
 # GENERATORS
 # ==========================================================
+
 
 class EnterprisePasswordGenerator:
     @staticmethod

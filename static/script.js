@@ -1,3 +1,68 @@
+let entropyChart = null;
+
+// Helper: Update Chart.js logic
+function updateChart(chartData) {
+  const ctx = document.getElementById("entropyChart").getContext("2d");
+  if (entropyChart) entropyChart.destroy();
+
+  entropyChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: Object.keys(chartData),
+      datasets: [
+        {
+          label: "Entropy Bits",
+          data: Object.values(chartData),
+          backgroundColor: ["#818cf8", "#6366f1", "#4f46e5", "#3730a3"],
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 128,
+          grid: { color: "rgba(255,255,255,0.1)" },
+          ticks: { color: "#fff" },
+        },
+        x: { ticks: { color: "#fff" } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+// Helper: Render Keyboard Visualization
+const keyboardLayout = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm"];
+function renderKeyboard(password) {
+  const container = document.getElementById("virtualKeyboard");
+  const section = document.getElementById("keyboardContainer");
+  if (!container || !section) return;
+
+  container.innerHTML = "";
+  section.classList.remove("hidden");
+
+  keyboardLayout.forEach((row) => {
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "flex gap-1";
+    row.split("").forEach((char) => {
+      const key = document.createElement("div");
+      key.innerText = char.toUpperCase();
+      const isPressed = password.toLowerCase().includes(char);
+      key.className = `w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded border text-[10px] sm:text-xs transition-all duration-300 ${
+        isPressed
+          ? "bg-indigo-500 border-white text-white scale-110 shadow-[0_0_15px_rgba(129,140,248,0.8)] font-bold"
+          : "border-white/10 text-white/20"
+      }`;
+      rowDiv.appendChild(key);
+    });
+    container.appendChild(rowDiv);
+  });
+}
+
 // ==========================================================
 // PASSWORD ANALYZER
 // ==========================================================
@@ -12,6 +77,10 @@ async function analyzePassword() {
   });
 
   const data = await response.json();
+
+  updateChart(data.chart_data);
+  renderKeyboard(password);
+
   const bar = document.getElementById("strengthBar");
   const text = document.getElementById("strengthText");
   const results = document.getElementById("analysisResults");
