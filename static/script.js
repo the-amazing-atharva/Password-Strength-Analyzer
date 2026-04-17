@@ -20,6 +20,46 @@ function toggleBenchmark() {
   }
 }
 
+function toggleRanking() {
+  const content = document.getElementById("rankingContent");
+  const arrow = document.getElementById("rankingArrow");
+
+  const isHidden = content.classList.contains("hidden");
+
+  if (isHidden) {
+    content.classList.remove("hidden");
+    arrow.style.transform = "rotate(180deg)";
+
+    // Refresh the chart dimensions so it fills the container properly
+    if (rankingChart) {
+      rankingChart.resize();
+      rankingChart.update();
+    }
+  } else {
+    content.classList.add("hidden");
+    arrow.style.transform = "rotate(0deg)";
+  }
+}
+
+// Ensure toggleBenchmark remains as well
+function toggleBenchmark() {
+  const content = document.getElementById("benchmarkContent");
+  const arrow = document.getElementById("benchmarkArrow");
+  const isHidden = content.classList.contains("hidden");
+
+  if (isHidden) {
+    content.classList.remove("hidden");
+    arrow.style.transform = "rotate(180deg)";
+    if (entropyChart) {
+      entropyChart.resize();
+      entropyChart.update();
+    }
+  } else {
+    content.classList.add("hidden");
+    arrow.style.transform = "rotate(0deg)";
+  }
+}
+
 let entropyChart = null;
 
 // Helper: Update Chart.js logic
