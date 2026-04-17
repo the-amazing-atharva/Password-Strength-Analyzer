@@ -44,6 +44,24 @@
         </div>
 
         <div
+          id="keyboardContainer"
+          class="hidden mt-8 p-6 bg-black/40 rounded-2xl border border-white/10"
+        >
+          <h4
+            class="text-sm font-bold uppercase tracking-widest text-indigo-400 mb-4 text-center"
+          >
+            Visual Pattern Map
+          </h4>
+          <div
+            id="virtualKeyboard"
+            class="flex flex-col gap-2 items-center font-mono"
+          ></div>
+          <p class="text-center text-xs text-white/40 mt-4 italic">
+            Highlighted keys show character distribution across rows.
+          </p>
+        </div>
+
+        <div
           id="attackerSection"
           class="mt-4 p-4 bg-blue-900/40 border border-blue-400/30 rounded-xl hidden"
         >
@@ -102,23 +120,6 @@
 
         <div id="analysisResults" class="mt-6 text-lg space-y-4"></div>
 
-        <div
-          id="keyboardContainer"
-          class="hidden mt-8 p-6 bg-black/40 rounded-2xl border border-white/10"
-        >
-          <h4
-            class="text-sm font-bold uppercase tracking-widest text-indigo-400 mb-4 text-center"
-          >
-            Visual Pattern Map
-          </h4>
-          <div
-            id="virtualKeyboard"
-            class="flex flex-col gap-2 items-center font-mono"
-          ></div>
-          <p class="text-center text-xs text-white/40 mt-4 italic">
-            Highlighted keys show character distribution across rows.
-          </p>
-        </div>
         <div
           class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10 border border-indigo-500/20"
         >
