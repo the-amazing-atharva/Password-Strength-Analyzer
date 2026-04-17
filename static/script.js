@@ -556,3 +556,48 @@ function applyHardened() {
   document.getElementById("hardenResult").classList.add("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+async function playAcousticFingerprint() {
+  const password = document.getElementById("passwordInput").value;
+  if (!password) return;
+
+  // 1. Generate a SHA-256 Hash of the password locally
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  // 2. Initialize the Audio Context
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // 3. Scale mapping (Pentatonic scale sounds better/less dissonant)
+  const notes = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25]; // C4, D4, E4, G4, A4, C5
+
+  // 4. Play a sequence of 6 notes based on the first 6 bytes of the hash
+  hashArray.slice(0, 6).forEach((byte, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    // Pick a note from our scale based on the byte value
+    const frequency = notes[byte % notes.length];
+
+    osc.type = i % 2 === 0 ? "triangle" : "sine"; // Alternate wave types for texture
+    osc.frequency.setValueAtTime(frequency, audioCtx.currentTime + i * 0.25);
+
+    // Fade in/out to prevent clicking sounds
+    gain.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.25);
+    gain.gain.linearRampToValueAtTime(
+      0.1,
+      audioCtx.currentTime + i * 0.25 + 0.05,
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioCtx.currentTime + i * 0.25 + 0.2,
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(audioCtx.currentTime + i * 0.25);
+    osc.stop(audioCtx.currentTime + i * 0.25 + 0.25);
+  });
+}
