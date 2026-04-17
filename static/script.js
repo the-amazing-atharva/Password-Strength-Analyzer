@@ -97,8 +97,19 @@ function updateChart(chartData) {
   });
 }
 
-// Helper: Render Keyboard Visualization
-const keyboardLayout = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm"];
+// ==========================================================
+// ENHANCED KEYBOARD VISUALIZATION
+// ==========================================================
+
+// Expanded layout including common special characters
+const keyboardLayout = [
+  "!@#$%^&*()_+", // Added Special Character Row
+  "1234567890",
+  "qwertyuiop",
+  "asdfghjkl",
+  "zxcvbnm",
+];
+
 function renderKeyboard(password) {
   const container = document.getElementById("virtualKeyboard");
   const section = document.getElementById("keyboardContainer");
@@ -110,10 +121,18 @@ function renderKeyboard(password) {
   keyboardLayout.forEach((row) => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "flex gap-1";
+
     row.split("").forEach((char) => {
       const key = document.createElement("div");
       key.innerText = char.toUpperCase();
-      const isPressed = password.toLowerCase().includes(char);
+
+      // Check if character exists in the current password (case-insensitive for letters)
+      const isPressed =
+        password.includes(char) ||
+        (char.match(/[a-z]/i) &&
+          (password.includes(char.toLowerCase()) ||
+            password.includes(char.toUpperCase())));
+
       key.className = `w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded border text-[10px] sm:text-xs transition-all duration-300 ${
         isPressed
           ? "bg-indigo-500 border-white text-white scale-110 shadow-[0_0_15px_rgba(129,140,248,0.8)] font-bold"
@@ -538,25 +557,35 @@ async function hardenPassword() {
   }
 }
 
+// ==========================================================
+// UPDATED APPLY FUNCTION
+// ==========================================================
+
 /**
  * Transfers the hardened password back to the main analyzer
- * and triggers a fresh scan.
+ * and triggers a fresh scan, including the keyboard update.
  */
 function applyHardened() {
   const hardenedValue = document.getElementById("hardenedOutput").value;
   const mainInput = document.getElementById("passwordInput");
 
-  // Update main input
+  // 1. Update main input value
   mainInput.value = hardenedValue;
 
-  // Trigger the existing analyzer function to update charts/score
+  // 2. Trigger the existing analyzer function (This handles charts, score, AND the keyboard)
   analyzePassword();
 
-  // UI Feedback: Hide the harden box and scroll to top
+  // 3. UI Feedback: Hide the harden box and scroll to top
   document.getElementById("hardenResult").classList.add("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Extra safety: Explicitly re-render keyboard to ensure the new chars show up
+  renderKeyboard(hardenedValue);
 }
 
+// ==========================================================
+// ACOUSTIC FINGERPRINT
+// ==========================================================
 async function playAcousticFingerprint() {
   const password = document.getElementById("passwordInput").value;
   if (!password) return;
