@@ -109,6 +109,18 @@ def pwned():
     return jsonify({"pwned": count > 0, "count": count})
 
 
+@app.route("/harden", methods=["POST"])
+def harden():
+    data = request.json
+    password = data.get("password", "")
+
+    if not password:
+        return jsonify({"error": "No password provided"}), 400
+
+    hardened = EnterprisePasswordGenerator.harden_password(password)
+    return jsonify({"hardened": hardened})
+
+
 # ==========================================================
 # MAIN
 # ==========================================================

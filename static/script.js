@@ -334,3 +334,43 @@ function toggleVisibility() {
   const i = document.getElementById("passwordInput");
   i.type = i.type === "password" ? "text" : "password";
 }
+
+// Add these functions to your script.js
+
+async function hardenPassword() {
+  const password = document.getElementById("passwordInput").value;
+  if (!password) {
+    alert("Please enter a password to harden first!");
+    return;
+  }
+
+  const response = await fetch("/harden", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+
+  const data = await response.json();
+
+  const container = document.getElementById("hardenResult");
+  const output = document.getElementById("hardenedOutput");
+
+  output.value = data.hardened;
+  container.classList.remove("hidden");
+}
+
+function applyHardened() {
+  const hardened = document.getElementById("hardenedOutput").value;
+  const mainInput = document.getElementById("passwordInput");
+
+  mainInput.value = hardened;
+
+  // Trigger re-analysis automatically
+  analyzePassword();
+
+  // Optional: Scroll back to top to see new score
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Hide the suggestion box
+  document.getElementById("hardenResult").classList.add("hidden");
+}

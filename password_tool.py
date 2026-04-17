@@ -449,6 +449,37 @@ class EnterprisePasswordAnalyzer:
 
 
 class EnterprisePasswordGenerator:
+    # Add this method inside the EnterprisePasswordGenerator class
+    @staticmethod
+    def harden_password(password: str) -> str:
+        if not password:
+            return ""
+
+        # Character sets for injection
+        specials = "!@#$%^&*()_+"
+        uppers = string.ascii_uppercase
+        nums = string.digits
+
+        res = list(password)
+
+        # 1. Inject Uppercase if missing
+        if not any(c.isupper() for c in res):
+            pos = secrets.randbelow(len(res))
+            res[pos] = secrets.choice(uppers)
+
+        # 2. Inject Number if missing
+        if not any(c.isdigit() for c in res):
+            pos = secrets.randbelow(len(res))
+            # Try not to overwrite the uppercase we just added
+            res.insert(pos, secrets.choice(nums))
+
+        # 3. Inject 2 Special Characters at random positions
+        for _ in range(2):
+            pos = secrets.randbelow(len(res) + 1)
+            res.insert(pos, secrets.choice(specials))
+
+        return "".join(res)
+
     @staticmethod
     def generate_password(length=16, use_uppercase=True, use_lowercase=True, use_numbers=True, use_special=True, exclude_ambiguous=False) -> str:
         if length < 4:
