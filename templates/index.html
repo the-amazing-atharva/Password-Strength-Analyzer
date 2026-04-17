@@ -119,6 +119,28 @@
             Highlighted keys show character distribution across rows.
           </p>
         </div>
+        <div
+          class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10 border border-indigo-500/20"
+        >
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-indigo-300">
+              Global Strength Ranking
+            </h2>
+            <span
+              id="percentileTag"
+              class="px-3 py-1 bg-indigo-600 rounded-full text-sm font-bold animate-pulse"
+            >
+              Waiting for input...
+            </span>
+          </div>
+          <div class="h-64">
+            <canvas id="rankingChart"></canvas>
+          </div>
+          <p class="text-xs text-center mt-4 text-white/40">
+            Line represents the density of the 100k most common passwords. Your
+            position is marked by the point.
+          </p>
+        </div>
       </div>
 
       <div

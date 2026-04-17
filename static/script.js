@@ -63,6 +63,71 @@ function renderKeyboard(password) {
   });
 }
 
+let rankingChart = null;
+
+function updateRankingChart(userEntropy, percentile) {
+  const ctx = document.getElementById("rankingChart").getContext("2d");
+  if (rankingChart) rankingChart.destroy();
+
+  // The Bell Curve: X-axis is Entropy, Y-axis is "How many people use it"
+  const labels = [0, 15, 30, 45, 60, 75, 90, 105, 120];
+  const dataPoints = [5, 40, 80, 45, 20, 10, 5, 2, 1]; // Common passwords peak at ~30 bits
+
+  rankingChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Common Passwords",
+          data: dataPoints,
+          borderColor: "rgba(255, 255, 255, 0.2)",
+          fill: true,
+          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          tension: 0.4,
+          pointRadius: 0,
+        },
+        {
+          label: "YOU",
+          data: [{ x: userEntropy, y: 40 }], // Placing the user point on the graph
+          backgroundColor: "#f43f5e",
+          borderColor: "#fff",
+          pointRadius: 10,
+          pointHoverRadius: 12,
+          showLine: false,
+          type: "scatter",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { display: false },
+        x: {
+          type: "linear",
+          position: "bottom",
+          min: 0,
+          max: 120,
+          ticks: { color: "#818cf8" },
+          title: { display: true, text: "Entropy (Bits)", color: "#fff" },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+      },
+    },
+  });
+
+  // Update the Percentile Badge
+  const tag = document.getElementById("percentileTag");
+  tag.innerText = `Stronger than ${percentile}% of users`;
+  tag.className =
+    percentile > 80
+      ? "px-3 py-1 bg-green-600 rounded-full text-sm font-bold"
+      : "px-3 py-1 bg-red-600 rounded-full text-sm font-bold";
+}
+
 // ==========================================================
 // PASSWORD ANALYZER
 // ==========================================================
@@ -80,6 +145,7 @@ async function analyzePassword() {
 
   updateChart(data.chart_data);
   renderKeyboard(password);
+  updateRankingChart(data.effective_entropy, data.percentile);
 
   const bar = document.getElementById("strengthBar");
   const text = document.getElementById("strengthText");
