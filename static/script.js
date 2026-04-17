@@ -69,7 +69,7 @@ async function analyzePassword() {
 
     <div class="bg-black/20 p-4 rounded-xl mt-4 border border-white/5">
       <h4 class="font-bold text-indigo-300 mb-2">⏱ Estimated Crack Times (Effective)</h4>
-      <div id="crackTimes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
+      <div id="crackTimes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-lg"></div>
     </div>
   `;
 

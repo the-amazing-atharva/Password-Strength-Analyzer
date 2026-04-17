@@ -21,7 +21,7 @@
           <input
             type="password"
             id="passwordInput"
-            class="w-full p-3 rounded-xl bg-white/20 focus:outline-none"
+            class="w-full p-4 rounded-xl bg-white/20 focus:outline-none"
             placeholder="Enter password..."
             oninput="analyzePassword()"
           />
@@ -41,7 +41,7 @@
             🧠 Zxcvbn based Attacker Guessing Engine
           </h3>
           <p id="attackerMeaning" class="text-blue-200"></p>
-          <p id="attackerGuesses" class="text-xs opacity-70"></p>
+          <p id="attackerGuesses" class="text-base opacity-70"></p>
         </div>
 
         <div class="mt-6">
@@ -56,7 +56,7 @@
 
           <div
             id="entropyInfo"
-            class="hidden mb-4 p-4 bg-black/40 border border-indigo-500/30 rounded-xl text-xs leading-relaxed text-indigo-100"
+            class="hidden mb-4 p-4 bg-black/40 border border-indigo-500/30 rounded-xl text-sm leading-relaxed text-indigo-100"
           >
             <p class="mb-2">
               <strong class="text-indigo-300">Entropy Logic:</strong>
@@ -88,7 +88,7 @@
           <p id="strengthText" class="mt-2 text-lg font-bold"></p>
         </div>
 
-        <div id="analysisResults" class="mt-6 text-sm space-y-4"></div>
+        <div id="analysisResults" class="mt-6 text-lg space-y-4"></div>
       </div>
 
       <div
@@ -100,14 +100,14 @@
           </h2>
           <button
             onclick="toggleBreachInfo()"
-            class="text-sm bg-white/20 hover:bg-white/40 px-3 py-1 rounded-xl"
+            class="text-lg bg-white/20 hover:bg-white/40 px-3 py-1 rounded-xl"
           >
             What is this?
           </button>
         </div>
         <div
           id="breachInfo"
-          class="mt-4 bg-white/10 p-4 rounded-xl hidden text-sm"
+          class="mt-4 bg-white/10 p-4 rounded-xl hidden text-lg"
         >
           <p>
             This section checks whether your password has appeared in known data
@@ -119,7 +119,7 @@
           <input
             type="password"
             id="pwnedInput"
-            class="w-full p-3 rounded-xl bg-white/20 focus:outline-none"
+            class="w-full p-4 rounded-xl bg-white/20 focus:outline-none"
             placeholder="Enter password to check..."
             oninput="checkPwnedPassword(this.value)"
           />
@@ -165,7 +165,7 @@
           <input
             type="text"
             id="generatedPassword"
-            class="w-full p-3 rounded-xl bg-white/20"
+            class="w-full p-4 rounded-xl bg-white/20"
             readonly
           />
           <button onclick="copyPassword()" class="px-4 bg-blue-600 rounded-xl">
@@ -204,7 +204,7 @@
           <input
             type="text"
             id="generatedPassphrase"
-            class="w-full p-3 rounded-xl bg-white/20"
+            class="w-full p-4 rounded-xl bg-white/20"
             readonly
           />
           <button
