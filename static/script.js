@@ -335,42 +335,57 @@ function toggleVisibility() {
   i.type = i.type === "password" ? "text" : "password";
 }
 
-// Add these functions to your script.js
-
+/**
+ * Communicates with the Flask backend to get a hardened version
+ * of the user's current input.
+ */
 async function hardenPassword() {
   const password = document.getElementById("passwordInput").value;
-  if (!password) {
-    alert("Please enter a password to harden first!");
+
+  if (!password || password.length < 1) {
+    alert("Please enter a password in the analyzer first!");
     return;
   }
 
-  const response = await fetch("/harden", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
-  });
+  try {
+    const response = await fetch("/harden", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
 
-  const data = await response.json();
+    if (!response.ok) throw new Error("Hardening failed");
 
-  const container = document.getElementById("hardenResult");
-  const output = document.getElementById("hardenedOutput");
+    const data = await response.json();
+    const container = document.getElementById("hardenResult");
+    const output = document.getElementById("hardenedOutput");
 
-  output.value = data.hardened;
-  container.classList.remove("hidden");
+    output.value = data.hardened;
+    container.classList.remove("hidden");
+
+    // Smooth scroll to the result
+    container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    console.error("Error hardening password:", err);
+    alert("Server error while hardening. Please try again.");
+  }
 }
 
+/**
+ * Transfers the hardened password back to the main analyzer
+ * and triggers a fresh scan.
+ */
 function applyHardened() {
-  const hardened = document.getElementById("hardenedOutput").value;
+  const hardenedValue = document.getElementById("hardenedOutput").value;
   const mainInput = document.getElementById("passwordInput");
 
-  mainInput.value = hardened;
+  // Update main input
+  mainInput.value = hardenedValue;
 
-  // Trigger re-analysis automatically
+  // Trigger the existing analyzer function to update charts/score
   analyzePassword();
 
-  // Optional: Scroll back to top to see new score
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // Hide the suggestion box
+  // UI Feedback: Hide the harden box and scroll to top
   document.getElementById("hardenResult").classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }

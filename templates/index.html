@@ -155,9 +155,9 @@
             >
               🛡️ One-Click Hardening
             </h2>
-            <p class="text-indigo-200/70 text-sm">
-              Instantly improve your current password with AI-driven character
-              injection.
+            <p class="text-indigo-200/70 text-base">
+              Instantly transform a weak password into an enterprise-grade
+              credential.
             </p>
           </div>
           <button
@@ -167,26 +167,59 @@
             Auto-Fix My Password
           </button>
         </div>
+
         <div
           id="hardenResult"
-          class="hidden mt-4 p-4 bg-white/10 rounded-xl border border-white/20 animate-fadeIn"
+          class="hidden mt-6 p-4 bg-black/40 rounded-xl border border-indigo-500/30 animate-fadeIn"
         >
-          <p class="text-xs uppercase tracking-widest text-indigo-300 mb-1">
-            Suggested Hardened Version:
+          <p class="text-sm uppercase tracking-widest text-indigo-300 mb-2">
+            Recommended Hardened Version:
           </p>
-          <div class="flex gap-2">
+          <div class="flex gap-3 mb-6">
             <input
               type="text"
               id="hardenedOutput"
               readonly
-              class="w-full bg-transparent text-xl font-mono focus:outline-none"
+              class="w-full bg-white/10 p-3 rounded-lg text-xl font-mono text-green-400 focus:outline-none border border-white/10"
             />
             <button
               onclick="applyHardened()"
-              class="text-xs bg-indigo-500 px-3 py-1 rounded-lg"
+              class="px-6 bg-green-600 hover:bg-green-500 rounded-lg font-bold transition-colors"
             >
               Apply
             </button>
+          </div>
+
+          <div class="border-t border-white/10 pt-4">
+            <h4
+              class="text-base font-semibold text-indigo-200 mb-2 uppercase tracking-wide"
+            >
+              How this improves security:
+            </h4>
+            <ul
+              class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-base text-indigo-100/80"
+            >
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-400">✔</span>
+                <strong>Positional Injection:</strong> Inserts characters at
+                random indices rather than just appending to the end.
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-400">✔</span>
+                <strong>Pattern Breaking:</strong> Disrupts known dictionary
+                words and common "keyboard walks."
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-400">✔</span>
+                <strong>Entropy Boost:</strong> Dramatically increases the
+                "Effective Entropy" by adding 3+ high-variety characters.
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-400">✔</span>
+                <strong>Complexity Saturation:</strong> Ensures at least one
+                uppercase, one number, and multiple symbols are present.
+              </li>
+            </ul>
           </div>
         </div>
       </div>
