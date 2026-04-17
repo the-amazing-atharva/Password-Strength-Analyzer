@@ -16,12 +16,57 @@
         Advanced Password Security Tool
       </h1>
 
-      <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10">
-        <h2 class="text-2xl font-semibold mb-4 text-indigo-300 text-center">
-          Entropy Benchmark (Bits)
-        </h2>
-        <div class="h-64">
-          <canvas id="entropyChart"></canvas>
+      <div
+        class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10 border border-white/5"
+      >
+        <button
+          onclick="toggleBenchmark()"
+          class="w-full flex justify-between items-center group focus:outline-none"
+        >
+          <div class="text-left">
+            <h2 class="text-2xl font-semibold text-indigo-300">
+              📈 Entropy Benchmark
+            </h2>
+            <p class="text-xs text-indigo-200/50 uppercase tracking-widest">
+              Comparative Strength Scale (Bits)
+            </p>
+          </div>
+          <span
+            id="benchmarkArrow"
+            class="text-2xl transition-transform duration-300 transform rotate-0 text-indigo-300 group-hover:scale-125"
+          >
+            ▼
+          </span>
+        </button>
+
+        <div id="benchmarkContent" class="hidden mt-6 animate-fadeIn">
+          <div class="h-64">
+            <canvas id="entropyChart"></canvas>
+          </div>
+          <div
+            class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-[10px] uppercase tracking-tighter opacity-70"
+          >
+            <div>
+              <span class="block text-red-500 font-bold text-sm">0-40</span>
+              Very Weak
+            </div>
+            <div>
+              <span class="block text-orange-400 font-bold text-sm">40-60</span>
+              Weak
+            </div>
+            <div>
+              <span class="block text-yellow-400 font-bold text-sm">60-80</span>
+              Moderate
+            </div>
+            <div>
+              <span class="block text-blue-400 font-bold text-sm">80-100</span>
+              Strong
+            </div>
+            <div>
+              <span class="block text-green-400 font-bold text-sm">100+</span>
+              Excellent
+            </div>
+          </div>
         </div>
       </div>
 

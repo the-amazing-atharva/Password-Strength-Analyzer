@@ -1,3 +1,25 @@
+function toggleBenchmark() {
+  const content = document.getElementById("benchmarkContent");
+  const arrow = document.getElementById("benchmarkArrow");
+
+  const isHidden = content.classList.contains("hidden");
+
+  if (isHidden) {
+    content.classList.remove("hidden");
+    arrow.style.transform = "rotate(180deg)";
+
+    // Crucial: Refresh/re-render the chart if it exists
+    // to prevent it from having zero width/height
+    if (entropyChart) {
+      entropyChart.resize();
+      entropyChart.update();
+    }
+  } else {
+    content.classList.add("hidden");
+    arrow.style.transform = "rotate(0deg)";
+  }
+}
+
 let entropyChart = null;
 
 // Helper: Update Chart.js logic
