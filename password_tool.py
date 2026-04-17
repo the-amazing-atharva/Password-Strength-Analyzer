@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List, Tuple
 import string
 import secrets
@@ -15,8 +16,16 @@ CURRENT_YEAR = datetime.now().year
 MIN_YEAR = 1950
 MAX_YEAR = CURRENT_YEAR + 5
 
-COMMON_PASSWORDS = {
-    "password", "123456", "123456789", "12345678", "12345",
+# Get the absolute path to the directory where app.py is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Build the path to the wordlist file dynamically
+WORDLIST_PATH = os.path.join(
+    BASE_DIR, 'data', '100k-most-used-passwords-NCSC.txt')
+
+# Fallback list used if the external file is missing
+FALLBACK_COMMON_PASSWORDS = {
+    "password", "password123", "Pasword123", "123456", "123456789", "12345678", "12345",
     "1234567", "password1", "123123", "1234567890",
     "qwerty", "abc123", "111111", "1234", "admin",
     "letmein", "welcome", "monkey", "dragon",
@@ -24,6 +33,29 @@ COMMON_PASSWORDS = {
     "admin123", "solo", "1q2w3e4r", "starwars",
     "qwertyuiop", "654321", "batman", "superman"
 }
+
+
+def load_enterprise_wordlist():
+    """Loads 100k passwords into a set for O(1) lookup."""
+    if os.path.exists(WORDLIST_PATH):
+        try:
+            with open(WORDLIST_PATH, "r", encoding="utf-8", errors="ignore") as f:
+                # Using a set comprehension for maximum speed
+                wordlist = {line.strip().lower() for line in f if line.strip()}
+                print(
+                    f"✅ Success: Loaded {len(wordlist)} passwords from {WORDLIST_PATH}")
+                return wordlist
+        except Exception as e:
+            print(f"❌ Error loading wordlist: {e}")
+            return FALLBACK_COMMON_PASSWORDS
+    else:
+        print(
+            f"⚠️ Warning: Wordlist not found at {WORDLIST_PATH}. Using fallback.")
+        return FALLBACK_COMMON_PASSWORDS
+
+
+# Initialize the global set
+COMMON_PASSWORDS = load_enterprise_wordlist()
 
 COMMON_WORDS = {
     "password", "pass", "admin", "user", "word",
@@ -62,18 +94,29 @@ LEET_MAP = str.maketrans({
 
 
 # ==========================================================
-# ENTERPRISE PASSWORD ANALYZER
+# ENTERPRISE PASSWORD ANALYZER (Updated Methods)
 # ==========================================================
 
 class EnterprisePasswordAnalyzer:
     def __init__(self, password: str):
         self.password = password
         self.length = len(password)
+        # normalize to lowercase for matching, but keep original for casing checks
         self.normalized = self._normalize_leet(password)
 
     def _normalize_leet(self, text: str) -> str:
         return text.lower().translate(LEET_MAP)
 
+    def detect_common_password(self) -> bool:
+        """Checks if the password (or its leet version) is in the 100k list."""
+        # We check the normalized version so 'P@ssw0rd123' -> 'password123'
+        # which matches the entries in our list.
+        return self.normalized in COMMON_PASSWORDS
+
+    def detect_leet_speak(self) -> bool:
+        """Improved: Only returns True if symbols are used as substitutions."""
+        leet_chars = set("@431!0$57")
+        return any(c in leet_chars for c in self.password)
     # --- CHARACTER SET & METRICS ---
 
     def get_character_sets(self) -> Dict[str, bool]:
@@ -125,6 +168,7 @@ class EnterprisePasswordAnalyzer:
     # --- PATTERN DETECTION ---
 
     def detect_common_password(self) -> bool:
+        # This now checks against your 100k list!
         return self.normalized in COMMON_PASSWORDS
 
     def detect_dictionary_words(self) -> List[str]:
@@ -135,7 +179,9 @@ class EnterprisePasswordAnalyzer:
         return found
 
     def detect_leet_speak(self) -> bool:
-        return any(c in "@431!0$57" for c in self.password)
+        # Only returns True if symbols are used in place of letters (the LEET_MAP keys)
+        leet_chars = set("@431!0$57")
+        return any(c in leet_chars for c in self.password)
 
     def detect_casing_mix(self) -> str:
         if self.password.islower():
@@ -245,18 +291,18 @@ class EnterprisePasswordAnalyzer:
             results["classic_gpu_bruteforce"] = "Instant"
         return results
 
-    # --- ROBUST GUESSING ENGINE (The Logic Fix) ---
+    # --- ROBUST GUESSING ENGINE ---
 
     def _estimate_pattern_guesses(self) -> float:
         if not self.password:
             return 0
+        # Check against the 100k list first
         if self.normalized in COMMON_PASSWORDS:
             return 10.0
 
         remaining = self.normalized
         total_guesses = 1.0
 
-        # Dictionary/Name/Season Greed Match
         all_dicts = sorted(COMMON_WORDS | COMMON_NAMES |
                            SEASONS | MONTHS, key=len, reverse=True)
         for word in all_dicts:
@@ -264,7 +310,6 @@ class EnterprisePasswordAnalyzer:
                 total_guesses += 2000
                 remaining = remaining.replace(word, "", 1)
 
-        # Sequence Match (123, abc, etc)
         num_seq = re.search(r'\d+', remaining)
         if num_seq:
             seq_val = num_seq.group()
@@ -274,18 +319,15 @@ class EnterprisePasswordAnalyzer:
                 total_guesses += (10 ** len(seq_val))
             remaining = remaining.replace(seq_val, "", 1)
 
-        # Year Match
         year_match = re.search(r'(19\d{2}|20\d{2})', remaining)
         if year_match:
             total_guesses += 3650
             remaining = remaining.replace(year_match.group(), "", 1)
 
-        # Brute Force Leftovers
         if remaining:
             charset_size = self.calculate_charset_size() or 26
             total_guesses *= (charset_size ** len(remaining))
 
-        # Casing/Leet Modifiers
         if self.password != self.password.lower():
             total_guesses *= 2
         if self.detect_leet_speak():
@@ -308,8 +350,6 @@ class EnterprisePasswordAnalyzer:
             score, meaning = 4, "🛡️ Extremely Secure"
         return {"score": score, "guesses": int(guesses), "guesses_log10": round(log_guesses, 2), "meaning": meaning}
 
-    # --- PWNED CHECK ---
-
     def check_pwned_password(self) -> int:
         sha1 = hashlib.sha1(self.password.encode("utf-8")).hexdigest().upper()
         prefix, suffix = sha1[:5], sha1[5:]
@@ -328,8 +368,7 @@ class EnterprisePasswordAnalyzer:
 
     def calculate_strength_score(self) -> Tuple[int, str]:
         entropy = self.effective_entropy()
-        score = min(100, int((entropy / 80) * 100)
-                    )  # Normalized to 80 bits for 100%
+        score = min(100, int((entropy / 80) * 100))
         if score < 20:
             rating = "VERY WEAK"
         elif score < 40:
@@ -375,7 +414,7 @@ class EnterprisePasswordAnalyzer:
 
 
 # ==========================================================
-# GENERATORS (Original Features Restored)
+# GENERATORS
 # ==========================================================
 
 class EnterprisePasswordGenerator:

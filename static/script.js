@@ -61,7 +61,8 @@ async function analyzePassword() {
           <li>• Sequential (abc/123): <strong>${data.patterns_detected.sequential ? "Detected" : "None"}</strong></li>
           <li>• Keyboard Walk: <strong>${data.patterns_detected.keyboard_walk ? "Detected" : "None"}</strong></li>
           <li>• Repeated Substrings: <strong>${data.patterns_detected.repeated_substrings ? "Detected" : "None"}</strong></li>
-          <li>• Common Password: <strong>${data.patterns_detected.common_password ? "⚠️ YES" : "No"}</strong></li>
+          <li>• Common Password: <strong>${data.patterns_detected.common_password ? "⚠️ FOUND IN LEAKED LIST" : "Not in top 100k"}</strong>
+          </li>
         </ul>
       </div>
     </div>
