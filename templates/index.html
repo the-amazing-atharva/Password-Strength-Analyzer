@@ -12,10 +12,9 @@
   >
     <div class="container mx-auto p-8">
       <h1 class="text-4xl font-bold text-center mb-10">
-        🔐 Advanced Password Security Tool
+        Advanced Password Security Tool
       </h1>
 
-      <!-- PASSWORD ANALYZER -->
       <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10">
         <h2 class="text-2xl font-semibold mb-4">Password Analyzer</h2>
         <div class="flex gap-3">
@@ -34,8 +33,49 @@
           </button>
         </div>
 
-        <!-- Strength Bar -->
+        <div
+          id="attackerSection"
+          class="mt-4 p-4 bg-blue-900/40 border border-blue-400/30 rounded-xl hidden"
+        >
+          <h3 class="text-lg font-bold">🧠 Attacker Guessing Engine</h3>
+          <p id="attackerMeaning" class="text-blue-200"></p>
+          <p id="attackerGuesses" class="text-xs opacity-70"></p>
+        </div>
+
         <div class="mt-6">
+          <div class="flex justify-between items-center mb-2">
+            <button
+              onclick="toggleEntropyInfo()"
+              class="text-[10px] bg-white/10 hover:bg-white/20 border border-white/20 px-2 py-1 rounded uppercase tracking-wider transition-all"
+            >
+              How is strength calculated?
+            </button>
+          </div>
+
+          <div
+            id="entropyInfo"
+            class="hidden mb-4 p-4 bg-black/40 border border-indigo-500/30 rounded-xl text-xs leading-relaxed text-indigo-100"
+          >
+            <p class="mb-2">
+              <strong class="text-indigo-300">Entropy Logic:</strong>
+            </p>
+            <ul class="space-y-2 list-disc ml-4">
+              <li>
+                <strong>Theoretical Entropy:</strong> Maximum possible strength
+                based purely on length and characters.
+              </li>
+              <li>
+                <strong>Effective Entropy:</strong> Real-world strength after
+                the engine subtracts points for patterns (dictionary words,
+                dates, keyboard walks).
+              </li>
+              <li>
+                <strong>Formula:</strong> We convert the total guesses required
+                into bits using $log_2(Guesses)$.
+              </li>
+            </ul>
+          </div>
+
           <div class="w-full bg-gray-700 rounded-full h-4">
             <div
               id="strengthBar"
@@ -43,14 +83,12 @@
               style="width: 0%"
             ></div>
           </div>
-          <p id="strengthText" class="mt-2 text-lg"></p>
+          <p id="strengthText" class="mt-2 text-lg font-bold"></p>
         </div>
 
-        <!-- Analysis Results -->
-        <div id="analysisResults" class="mt-6 text-sm space-y-2"></div>
+        <div id="analysisResults" class="mt-6 text-sm space-y-4"></div>
       </div>
 
-      <!-- BREACH CHECK / PWNED PASSWORD SECTION -->
       <div
         class="bg-gradient-to-r from-red-600 via-pink-600 to-purple-600 rounded-2xl p-6 shadow-2xl mb-10"
       >
@@ -59,32 +97,22 @@
             🔓 Breach Check (Have I Been Pwned)
           </h2>
           <button
-            id="toggleBreachInfo"
             onclick="toggleBreachInfo()"
             class="text-sm bg-white/20 hover:bg-white/40 px-3 py-1 rounded-xl"
           >
             What is this?
           </button>
         </div>
-
-        <!-- Toggleable Info Panel -->
         <div
           id="breachInfo"
           class="mt-4 bg-white/10 p-4 rounded-xl hidden text-sm"
         >
           <p>
             This section checks whether your password has appeared in known data
-            breaches using the <strong>Have I Been Pwned</strong> database. If a
-            password is found, it means it has been exposed publicly and should
-            <strong>never</strong> be used again.
-          </p>
-          <p class="mt-2">
-            The check uses a secure method (k-anonymity) to protect your
-            password from being fully exposed.
+            breaches using k-anonymity. If a password is found, it has been
+            exposed publicly and is no longer safe to use.
           </p>
         </div>
-
-        <!-- Input & Result -->
         <div class="mt-6 flex gap-3 items-center">
           <input
             type="password"
@@ -100,11 +128,9 @@
             ✖
           </button>
         </div>
-
         <div id="pwnedWarning" class="mt-4 text-lg font-semibold"></div>
       </div>
 
-      <!-- PASSWORD GENERATOR -->
       <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl mb-10">
         <h2 class="text-2xl font-semibold mb-4">Password Generator</h2>
         <div class="flex gap-4 mb-4 flex-wrap items-center">
@@ -146,7 +172,6 @@
         </div>
       </div>
 
-      <!-- PASSPHRASE GENERATOR -->
       <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl">
         <h2 class="text-2xl font-semibold mb-4">Passphrase Generator</h2>
         <div class="flex gap-3 mb-4 flex-wrap items-center">
@@ -162,9 +187,7 @@
             value="-"
             class="p-2 rounded bg-white/20 w-24"
           />
-          <label
-            ><input type="checkbox" id="capitalize" /> Capitalize Words</label
-          >
+          <label><input type="checkbox" id="capitalize" /> Capitalize</label>
           <label
             ><input type="checkbox" id="includeNumber" /> Include Number</label
           >
@@ -193,13 +216,12 @@
     </div>
 
     <script>
-      // Toggle breach info section
       function toggleBreachInfo() {
-        const info = document.getElementById("breachInfo");
-        info.classList.toggle("hidden");
+        document.getElementById("breachInfo").classList.toggle("hidden");
       }
-
-      // Clear pwned input field
+      function toggleEntropyInfo() {
+        document.getElementById("entropyInfo").classList.toggle("hidden");
+      }
       function clearPwnedInput() {
         document.getElementById("pwnedInput").value = "";
         document.getElementById("pwnedWarning").innerText = "";

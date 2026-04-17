@@ -16,168 +16,185 @@ async function analyzePassword() {
   const text = document.getElementById("strengthText");
   const results = document.getElementById("analysisResults");
 
-  // -------------------------
+  // Update Attacker Analysis Section
+  const attackerSec = document.getElementById("attackerSection");
+  const attackerMeaning = document.getElementById("attackerMeaning");
+  const attackerGuesses = document.getElementById("attackerGuesses");
+
+  attackerSec.classList.remove("hidden");
+  attackerMeaning.innerText = `Estimate: ${data.attacker_analysis.meaning}`;
+  attackerGuesses.innerText = `Attacker would need approx. 10^${data.attacker_analysis.guesses_log10} guesses.`;
+
   // Strength bar
-  // -------------------------
   bar.style.width = data.score + "%";
   if (data.score < 40) bar.className = "h-4 rounded-full bg-red-500";
   else if (data.score < 70) bar.className = "h-4 rounded-full bg-yellow-500";
   else bar.className = "h-4 rounded-full bg-green-500";
 
-  // -------------------------
-  // Score & rating
-  // -------------------------
   text.innerText = `${data.score}/100 - ${data.rating}`;
 
   // -------------------------
-  // Detailed analysis
+  // FULL Results Display
   // -------------------------
   results.innerHTML = `
-    <p>🔐 <strong>Shannon Entropy:</strong> ${data.shannon_entropy} bits</p>
-    <p>📊 <strong>Theoretical Entropy:</strong> ${data.theoretical_entropy} bits</p>
-    <p>⚡ <strong>Effective Entropy:</strong> ${data.effective_entropy} bits</p>
-    <p>📏 <strong>Length:</strong> ${data.length}</p>
-    <p>🧮 <strong>Character Sets:</strong> ${Object.entries(data.character_sets)
-      .filter(([k, v]) => v)
-      .map(([k]) => k)
-      .join(", ")}</p>
-    <p>🔣 <strong>Charset Size:</strong> ${data.charset_size}</p>
-    <p>⏱ <strong>Estimated Crack Times:</strong></p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+        <h4 class="font-bold text-indigo-300 mb-2">📊 Entropy & Metrics</h4>
+        <ul class="space-y-1 opacity-90">
+          <li>• Shannon Entropy: <strong>${data.shannon_entropy} bits</strong></li>
+          <li>• Effective Entropy: <strong>${data.effective_entropy} bits</strong></li>
+          <li>• Theoretical Entropy: <strong>${data.theoretical_entropy} bits</strong></li>
+          <li>• Length: <strong>${data.length}</strong></li>
+          <li>• Unique Characters: <strong>${data.unique_chars}</strong></li>
+          <li>• Charset Size: <strong>${data.charset_size}</strong></li>
+          <li>• Spatial Complexity: <strong>${data.spatial_complexity}</strong></li>
+        </ul>
+      </div>
+
+      <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+        <h4 class="font-bold text-indigo-300 mb-2">🔍 Patterns Detected</h4>
+        <ul class="space-y-1 opacity-90">
+          <li>• Casing Style: <strong>${data.patterns_detected.casing}</strong></li>
+          <li>• Dictionary Words: <strong>${data.patterns_detected.dictionary_words.join(", ") || "None"}</strong></li>
+          <li>• Leet Speak: <strong>${data.patterns_detected.leet_speak ? "Detected" : "None"}</strong></li>
+          <li>• Year Detected: <strong>${data.patterns_detected.year ? "Detected" : "None"}</strong></li>
+          <li>• Sequential (abc/123): <strong>${data.patterns_detected.sequential ? "Detected" : "None"}</strong></li>
+          <li>• Keyboard Walk: <strong>${data.patterns_detected.keyboard_walk ? "Detected" : "None"}</strong></li>
+          <li>• Repeated Substrings: <strong>${data.patterns_detected.repeated_substrings ? "Detected" : "None"}</strong></li>
+          <li>• Common Password: <strong>${data.patterns_detected.common_password ? "⚠️ YES" : "No"}</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bg-black/20 p-4 rounded-xl mt-4 border border-white/5">
+      <h4 class="font-bold text-indigo-300 mb-2">⏱ Estimated Crack Times (Effective)</h4>
+      <div id="crackTimes" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
+    </div>
   `;
 
-  const crackTimesUL = document.createElement("ul");
-  crackTimesUL.className = "ml-4 list-disc";
-
+  // Dynamically populate crack times
+  const crackTimesContainer = document.getElementById("crackTimes");
   for (const [key, value] of Object.entries(data.crack_time_estimates)) {
-    const li = document.createElement("li");
+    const p = document.createElement("p");
     const name = key
       .replace(/_/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
-    li.textContent = `${name}: ${value}`;
-    crackTimesUL.appendChild(li);
+    p.innerHTML = `<span class="opacity-70">${name}:</span> <strong>${value}</strong>`;
+    crackTimesContainer.appendChild(p);
   }
-  results.appendChild(crackTimesUL);
-
-  results.innerHTML += `
-    <p>⚠ <strong>Patterns Detected:</strong></p>
-    <ul class="ml-4 list-disc">
-      <li>Common Password: ${data.patterns_detected.common_password}</li>
-      <li>Dictionary Words: ${data.patterns_detected.dictionary_words.join(", ") || "None"}</li>
-      <li>Year: ${data.patterns_detected.year}</li>
-      <li>Word+Year: ${data.patterns_detected.word_year}</li>
-      <li>Season+Year: ${data.patterns_detected.season_year}</li>
-      <li>Month+Year: ${data.patterns_detected.month_year}</li>
-      <li>Name+Number: ${data.patterns_detected.name_number}</li>
-      <li>Sequential: ${data.patterns_detected.sequential}</li>
-      <li>Keyboard Walk: ${data.patterns_detected.keyboard_walk}</li>
-      <li>Repeated Substrings: ${data.patterns_detected.repeated_substrings}</li>
-    </ul>
-  `;
 }
 
 // ==========================================================
-// PWNED / BREACH CHECK (IMPROVED COLORS)
+// PWNED / BREACH CHECK
 // ==========================================================
 async function checkPwnedPassword(password) {
   const warningEl = document.getElementById("pwnedWarning");
   if (!password) {
     warningEl.innerText = "";
-    warningEl.className = "";
     return;
   }
-
   warningEl.innerText = "Checking...";
-  warningEl.className = "mt-2 text-white font-semibold"; // neutral white while checking
-
   try {
-    const response = await fetch("/pwned", {
+    const res = await fetch("/pwned", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
-
-    const data = await response.json();
-
+    const data = await res.json();
     if (data.pwned) {
-      warningEl.innerHTML = `⚠ This password has appeared in breaches <strong>${data.count}</strong> times!`;
+      warningEl.innerHTML = `⚠ Found in breaches ${data.count} times!`;
       warningEl.className =
         "mt-2 font-bold text-white bg-red-700/50 p-2 rounded-xl animate-pulse";
     } else {
-      warningEl.innerHTML = "✅ This password was not found in known breaches.";
+      warningEl.innerHTML = "✅ Not found in known breaches.";
       warningEl.className =
         "mt-2 font-semibold text-white bg-green-700/50 p-2 rounded-xl";
     }
   } catch (err) {
-    warningEl.innerHTML = "⚠ Error checking password!";
-    warningEl.className =
-      "mt-2 font-semibold text-white bg-yellow-700/50 p-2 rounded-xl";
+    warningEl.innerText = "Error checking API";
   }
 }
 
 // ==========================================================
-// PASSWORD GENERATOR
+// GENERATORS
 // ==========================================================
 async function generatePassword() {
   const length = document.getElementById("length").value;
-  const use_uppercase = document.getElementById("uppercase").checked;
-  const use_lowercase = document.getElementById("lowercase").checked;
-  const use_numbers = document.getElementById("numbers").checked;
-  const use_special = document.getElementById("special").checked;
-  const exclude_ambiguous = document.getElementById("excludeAmbiguous").checked;
-
-  const response = await fetch("/generate", {
+  const res = await fetch("/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       length,
-      uppercase: use_uppercase,
-      lowercase: use_lowercase,
-      numbers: use_numbers,
-      special: use_special,
-      exclude_ambiguous,
+      uppercase: document.getElementById("uppercase").checked,
+      lowercase: document.getElementById("lowercase").checked,
+      numbers: document.getElementById("numbers").checked,
+      special: document.getElementById("special").checked,
+      exclude_ambiguous: document.getElementById("excludeAmbiguous").checked,
     }),
   });
-
-  const data = await response.json();
+  const data = await res.json();
   document.getElementById("generatedPassword").value = data.password;
 }
 
 async function generatePassphrase() {
-  const words = document.getElementById("words").value;
-  const separator = document.getElementById("separator").value;
-  const capitalize = document.getElementById("capitalize").checked;
-  const includeNumber = document.getElementById("includeNumber").checked;
-
-  const response = await fetch("/passphrase", {
+  const res = await fetch("/passphrase", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      words,
-      separator,
-      capitalize,
-      include_number: includeNumber,
+      words: document.getElementById("words").value,
+      separator: document.getElementById("separator").value,
+      capitalize: document.getElementById("capitalize").checked,
+      include_number: document.getElementById("includeNumber").checked,
     }),
   });
-
-  const data = await response.json();
+  const data = await res.json();
   document.getElementById("generatedPassphrase").value = data.passphrase;
+}
+
+// ==========================================================
+// UTILITIES (UPDATED)
+// ==========================================================
+
+// New: Toggles the Entropy Explanation Panel
+function toggleEntropyInfo() {
+  const info = document.getElementById("entropyInfo");
+  if (info) {
+    info.classList.toggle("hidden");
+  }
+}
+
+// Fixed: Toggles the Breach Info Panel
+function toggleBreachInfo() {
+  const info = document.getElementById("breachInfo");
+  if (info) {
+    info.classList.toggle("hidden");
+  }
+}
+
+// Fixed: Clears the Pwned Input field and warnings
+function clearPwnedInput() {
+  const input = document.getElementById("pwnedInput");
+  const warning = document.getElementById("pwnedWarning");
+  if (input) input.value = "";
+  if (warning) {
+    warning.innerText = "";
+    warning.className = ""; // Reset background colors/animations
+  }
 }
 
 function copyPassword() {
   const field = document.getElementById("generatedPassword");
   field.select();
   document.execCommand("copy");
-  alert("Copied to clipboard!");
 }
 
 function copyPassphrase() {
   const field = document.getElementById("generatedPassphrase");
   field.select();
   document.execCommand("copy");
-  alert("Copied to clipboard!");
 }
 
 function toggleVisibility() {
-  const input = document.getElementById("passwordInput");
-  input.type = input.type === "password" ? "text" : "password";
+  const i = document.getElementById("passwordInput");
+  i.type = i.type === "password" ? "text" : "password";
 }

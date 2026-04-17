@@ -5,8 +5,7 @@ import math
 import re
 from datetime import datetime
 import hashlib
-import requests  # NEW: for breach check
-
+import requests
 
 # ==========================================================
 # GLOBAL INTELLIGENCE CONFIGURATION
@@ -27,9 +26,9 @@ COMMON_PASSWORDS = {
 }
 
 COMMON_WORDS = {
-    "password", "pass", "admin", "user",
+    "password", "pass", "admin", "user", "word",
     "root", "login", "welcome", "company",
-    "test", "guest"
+    "test", "guest", "security", "master"
 }
 
 COMMON_NAMES = {
@@ -67,27 +66,15 @@ LEET_MAP = str.maketrans({
 # ==========================================================
 
 class EnterprisePasswordAnalyzer:
-    """
-    Industrial-grade password intelligence engine.
-    Combines entropy modeling + structural pattern analysis +
-    dictionary intelligence + attacker simulation.
-    """
-
     def __init__(self, password: str):
         self.password = password
         self.length = len(password)
         self.normalized = self._normalize_leet(password)
 
-    # ------------------------------------------------------
-    # Normalization
-    # ------------------------------------------------------
-
     def _normalize_leet(self, text: str) -> str:
         return text.lower().translate(LEET_MAP)
 
-    # ------------------------------------------------------
-    # Character Set Analysis
-    # ------------------------------------------------------
+    # --- CHARACTER SET & METRICS ---
 
     def get_character_sets(self) -> Dict[str, bool]:
         return {
@@ -110,10 +97,6 @@ class EnterprisePasswordAnalyzer:
             size += 32
         return size
 
-    # ------------------------------------------------------
-    # ENTROPY CALCULATIONS
-    # ------------------------------------------------------
-
     def shannon_entropy(self) -> float:
         if not self.password:
             return 0.0
@@ -132,9 +115,14 @@ class EnterprisePasswordAnalyzer:
             return 0
         return self.length * math.log2(charset)
 
-    # ------------------------------------------------------
-    # ADVANCED PATTERN DETECTION
-    # ------------------------------------------------------
+    def calculate_spatial_complexity(self) -> float:
+        """Measures character variety relative to length."""
+        if self.length == 0:
+            return 0.0
+        unique_chars = len(set(self.password))
+        return round(unique_chars / self.length, 2)
+
+    # --- PATTERN DETECTION ---
 
     def detect_common_password(self) -> bool:
         return self.normalized in COMMON_PASSWORDS
@@ -145,6 +133,18 @@ class EnterprisePasswordAnalyzer:
             if word in self.normalized:
                 found.append(word)
         return found
+
+    def detect_leet_speak(self) -> bool:
+        return any(c in "@431!0$57" for c in self.password)
+
+    def detect_casing_mix(self) -> str:
+        if self.password.islower():
+            return "All Lowercase"
+        if self.password.isupper():
+            return "All Uppercase"
+        if any(c.isupper() for c in self.password) and any(c.islower() for c in self.password):
+            return "Mixed Case"
+        return "None"
 
     def detect_year(self) -> bool:
         matches = re.findall(r"(19\d{2}|20\d{2})", self.password)
@@ -204,57 +204,20 @@ class EnterprisePasswordAnalyzer:
                     return True
         return False
 
-    # ------------------------------------------------------
-    # EFFECTIVE ENTROPY MODEL
-    # ------------------------------------------------------
+    # --- ENTROPY & CRACK TIMES ---
 
     def effective_entropy(self) -> float:
-        entropy = self.theoretical_entropy()
-
-        penalty = 0
-
-        if self.detect_common_password():
-            penalty += 40
-
-        penalty += len(self.detect_dictionary_words()) * 10
-
-        if self.detect_year():
-            penalty += 10
-
-        if self.detect_word_year():
-            penalty += 15
-
-        if self.detect_season_year() or self.detect_month_year():
-            penalty += 15
-
-        if self.detect_name_number():
-            penalty += 10
-
-        if self.detect_sequential_patterns():
-            penalty += 10
-
-        if self.detect_keyboard_patterns():
-            penalty += 15
-
-        if self.detect_repeated_substrings():
-            penalty += 15
-
-        return max(0, entropy - penalty)
-
-    # ------------------------------------------------------
-    # CRACK TIME SIMULATION
-    # ------------------------------------------------------
+        """Matches entropy bits to the guess engine log10 result."""
+        guesses = self._estimate_pattern_guesses()
+        if guesses <= 1:
+            return 0.0
+        return round(math.log2(guesses), 2)
 
     def _format_time(self, seconds: float) -> str:
         if seconds < 1:
             return "Instant"
-        units = [
-            ("years", 31536000),
-            ("days", 86400),
-            ("hours", 3600),
-            ("minutes", 60),
-            ("seconds", 1),
-        ]
+        units = [("years", 31536000), ("days", 86400),
+                 ("hours", 3600), ("minutes", 60), ("seconds", 1)]
         for name, count in units:
             value = seconds // count
             if value >= 1:
@@ -262,51 +225,100 @@ class EnterprisePasswordAnalyzer:
         return "Instant"
 
     def crack_time_estimates(self) -> Dict[str, str]:
-        entropy = self.effective_entropy()
-        guesses = 2 ** entropy
-
+        guesses = self._estimate_pattern_guesses()
         scenarios = {
             "online_throttled_100ps": 100,
             "online_unthrottled_10kps": 10_000,
             "offline_bcrypt_100kps": 100_000,
             "offline_fast_gpu_10Bps": 10_000_000_000
         }
-
         results = {}
         for name, rate in scenarios.items():
-            seconds = guesses / rate
-            results[name] = self._format_time(seconds)
+            results[name] = self._format_time(guesses / rate)
 
-        # Classic GPU brute-force
         charset_size = self.calculate_charset_size()
         if charset_size > 0:
             total_combinations = charset_size ** self.length
-            seconds_gpu = total_combinations / 10_000_000_000
-            results["classic_gpu_bruteforce"] = self._format_time(seconds_gpu)
+            results["classic_gpu_bruteforce"] = self._format_time(
+                total_combinations / 10_000_000_000)
         else:
             results["classic_gpu_bruteforce"] = "Instant"
-
         return results
 
-    # ------------------------------------------------------
-    # BREACH CHECK USING HAVE I BEEN PWNED
-    # ------------------------------------------------------
+    # --- ROBUST GUESSING ENGINE (The Logic Fix) ---
+
+    def _estimate_pattern_guesses(self) -> float:
+        if not self.password:
+            return 0
+        if self.normalized in COMMON_PASSWORDS:
+            return 10.0
+
+        remaining = self.normalized
+        total_guesses = 1.0
+
+        # Dictionary/Name/Season Greed Match
+        all_dicts = sorted(COMMON_WORDS | COMMON_NAMES |
+                           SEASONS | MONTHS, key=len, reverse=True)
+        for word in all_dicts:
+            if word in remaining:
+                total_guesses += 2000
+                remaining = remaining.replace(word, "", 1)
+
+        # Sequence Match (123, abc, etc)
+        num_seq = re.search(r'\d+', remaining)
+        if num_seq:
+            seq_val = num_seq.group()
+            if seq_val in "1234567890" or seq_val in "0987654321":
+                total_guesses += 100
+            else:
+                total_guesses += (10 ** len(seq_val))
+            remaining = remaining.replace(seq_val, "", 1)
+
+        # Year Match
+        year_match = re.search(r'(19\d{2}|20\d{2})', remaining)
+        if year_match:
+            total_guesses += 3650
+            remaining = remaining.replace(year_match.group(), "", 1)
+
+        # Brute Force Leftovers
+        if remaining:
+            charset_size = self.calculate_charset_size() or 26
+            total_guesses *= (charset_size ** len(remaining))
+
+        # Casing/Leet Modifiers
+        if self.password != self.password.lower():
+            total_guesses *= 2
+        if self.detect_leet_speak():
+            total_guesses *= 1.5
+
+        return total_guesses
+
+    def get_zxcvbn_score(self) -> Dict:
+        guesses = self._estimate_pattern_guesses()
+        log_guesses = math.log10(guesses) if guesses > 0 else 0
+        if log_guesses < 4:
+            score, meaning = 0, "⚠️ Extremely Guessable"
+        elif log_guesses < 7:
+            score, meaning = 1, "❌ Weak (Pattern Found)"
+        elif log_guesses < 9:
+            score, meaning = 2, "OK (Fairly Unguessable)"
+        elif log_guesses < 11:
+            score, meaning = 3, "✅ Safely Unguessable"
+        else:
+            score, meaning = 4, "🛡️ Extremely Secure"
+        return {"score": score, "guesses": int(guesses), "guesses_log10": round(log_guesses, 2), "meaning": meaning}
+
+    # --- PWNED CHECK ---
 
     def check_pwned_password(self) -> int:
-        """
-        Returns number of times password appears in breaches.
-        0 = safe, -1 = API error.
-        """
         sha1 = hashlib.sha1(self.password.encode("utf-8")).hexdigest().upper()
-        prefix = sha1[:5]
-        suffix = sha1[5:]
+        prefix, suffix = sha1[:5], sha1[5:]
         url = f"https://api.pwnedpasswords.com/range/{prefix}"
         try:
             res = requests.get(url, timeout=5)
             if res.status_code != 200:
                 return -1
-            hashes = res.text.splitlines()
-            for line in hashes:
+            for line in res.text.splitlines():
                 h, count = line.split(":")
                 if h == suffix:
                     return int(count)
@@ -314,13 +326,10 @@ class EnterprisePasswordAnalyzer:
         except requests.RequestException:
             return -1
 
-    # ------------------------------------------------------
-    # ENTERPRISE SCORING (0–100)
-    # ------------------------------------------------------
-
     def calculate_strength_score(self) -> Tuple[int, str]:
         entropy = self.effective_entropy()
-        score = min(100, int((entropy / 120) * 100))
+        score = min(100, int((entropy / 80) * 100)
+                    )  # Normalized to 80 bits for 100%
         if score < 20:
             rating = "VERY WEAK"
         elif score < 40:
@@ -335,59 +344,43 @@ class EnterprisePasswordAnalyzer:
             rating = "EXCELLENT"
         return score, rating
 
-    # ------------------------------------------------------
-    # FULL ENTERPRISE REPORT
-    # ------------------------------------------------------
-
     def get_full_analysis(self) -> Dict:
         score, rating = self.calculate_strength_score()
-        pwned_count = self.check_pwned_password()  # NEW
-
         return {
             "password": self.password,
-            "length": self.length,
+            "score": score,
+            "rating": rating,
             "shannon_entropy": round(self.shannon_entropy(), 2),
             "theoretical_entropy": round(self.theoretical_entropy(), 2),
-            "effective_entropy": round(self.effective_entropy(), 2),
-            "log10_guess_space": round(
-                math.log10(2 ** self.effective_entropy()
-                           ) if self.effective_entropy() > 0 else 0, 2
-            ),
-            "character_sets": self.get_character_sets(),
+            "effective_entropy": self.effective_entropy(),
+            "length": self.length,
             "charset_size": self.calculate_charset_size(),
+            "unique_chars": len(set(self.password)),
+            "spatial_complexity": self.calculate_spatial_complexity(),
+            "character_sets": self.get_character_sets(),
             "patterns_detected": {
                 "common_password": self.detect_common_password(),
                 "dictionary_words": self.detect_dictionary_words(),
                 "year": self.detect_year(),
-                "word_year": self.detect_word_year(),
-                "season_year": self.detect_season_year(),
-                "month_year": self.detect_month_year(),
-                "name_number": self.detect_name_number(),
+                "leet_speak": self.detect_leet_speak(),
+                "casing": self.detect_casing_mix(),
                 "sequential": self.detect_sequential_patterns(),
                 "keyboard_walk": self.detect_keyboard_patterns(),
                 "repeated_substrings": self.detect_repeated_substrings(),
             },
-            "score": score,
-            "rating": rating,
             "crack_time_estimates": self.crack_time_estimates(),
-            "pwned_count": pwned_count  # NEW
+            "pwned_count": self.check_pwned_password(),
+            "attacker_analysis": self.get_zxcvbn_score()
         }
 
 
 # ==========================================================
-# ENTERPRISE PASSWORD GENERATOR (UNCHANGED)
+# GENERATORS (Original Features Restored)
 # ==========================================================
 
 class EnterprisePasswordGenerator:
     @staticmethod
-    def generate_password(
-        length: int = 16,
-        use_uppercase: bool = True,
-        use_lowercase: bool = True,
-        use_numbers: bool = True,
-        use_special: bool = True,
-        exclude_ambiguous: bool = False
-    ) -> str:
+    def generate_password(length=16, use_uppercase=True, use_lowercase=True, use_numbers=True, use_special=True, exclude_ambiguous=False) -> str:
         if length < 4:
             raise ValueError("Password length must be at least 4.")
         chars = ""
@@ -402,8 +395,9 @@ class EnterprisePasswordGenerator:
         if not chars:
             raise ValueError("At least one character set required.")
         if exclude_ambiguous:
-            ambiguous = "O0l1I|"
-            chars = ''.join(c for c in chars if c not in ambiguous)
+            for c in "O0l1I|":
+                chars = chars.replace(c, "")
+
         password = []
         if use_lowercase:
             password.append(secrets.choice(string.ascii_lowercase))
@@ -413,28 +407,17 @@ class EnterprisePasswordGenerator:
             password.append(secrets.choice(string.digits))
         if use_special:
             password.append(secrets.choice("!@#$%^&*()_+-=[]{}|;:,.<>?"))
+
         for _ in range(length - len(password)):
             password.append(secrets.choice(chars))
+
         secrets.SystemRandom().shuffle(password)
         return ''.join(password)
 
     @staticmethod
-    def generate_passphrase(
-        num_words: int = 4,
-        separator: str = "-",
-        capitalize: bool = False,
-        include_number: bool = False
-    ) -> str:
-        words = [
-            "alpha", "bravo", "charlie", "delta", "echo",
-            "foxtrot", "golf", "hotel", "india", "juliet",
-            "kilo", "lima", "mike", "november", "oscar",
-            "papa", "quebec", "romeo", "sierra", "tango",
-            "uniform", "victor", "whiskey", "xray",
-            "yankee", "zulu", "cipher", "encrypt",
-            "secure", "shield", "guard", "protect",
-            "fortress", "vault", "lock", "token"
-        ]
+    def generate_passphrase(num_words=4, separator="-", capitalize=False, include_number=False) -> str:
+        words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima", "mike", "november", "oscar", "papa", "quebec", "romeo",
+                 "sierra", "tango", "uniform", "victor", "whiskey", "xray", "yankee", "zulu", "cipher", "encrypt", "secure", "shield", "guard", "protect", "fortress", "vault", "lock", "token"]
         selected = [secrets.choice(words) for _ in range(num_words)]
         if capitalize:
             selected = [w.capitalize() for w in selected]
