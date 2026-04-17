@@ -449,7 +449,60 @@ class EnterprisePasswordAnalyzer:
 
 
 class EnterprisePasswordGenerator:
+    @staticmethod
+    def calculate_pronounceability(phrase: str) -> int:
+        """
+        Calculates a score (0-100) based on Vowel-Consonant patterns.
+        Easier to pronounce = easier to remember.
+        """
+        if not phrase:
+            return 0
+        vowels = "aeiouy"
+        phrase = phrase.lower()
+        score = 0
+
+        # Check for V-C-V or C-V-C patterns which are naturally pronounceable
+        patterns = re.findall(
+            r'[aeiouy][^aeiouy][aeiouy]|[^aeiouy][aeiouy][^aeiouy]', phrase)
+        score += (len(patterns) * 15)
+
+        # Penalize long strings of consonants
+        consonant_clusters = re.findall(r'[^aeiouy\s-]{3,}', phrase)
+        score -= (len(consonant_clusters) * 20)
+
+        return max(10, min(100, score + 40))  # Base 40, clamped 10-100
+
+    @staticmethod
+    def generate_passphrase(num_words=4, separator="-", capitalize=False, include_number=False) -> Dict:
+        # Standard Diceware-style wordlist (simplified here, but logic holds)
+        words_list = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel",
+                      "india", "juliet", "kilo", "lima", "mike", "november", "oscar", "papa",
+                      "quebec", "romeo", "sierra", "tango", "uniform", "victor", "whiskey",
+                      "xray", "yankee", "zulu", "cipher", "encrypt", "secure", "shield",
+                      "guard", "protect", "fortress", "vault", "lock", "token"]
+
+        selected_words = []
+        dice_metadata = []
+
+        for _ in range(num_words):
+            # Simulate 5 dice rolls (Standard Diceware uses 5 dice per word)
+            rolls = [secrets.choice([1, 2, 3, 4, 5, 6]) for _ in range(5)]
+            word = secrets.choice(words_list)
+
+            selected_words.append(word.capitalize() if capitalize else word)
+            dice_metadata.append({"word": word, "rolls": rolls})
+
+        phrase = separator.join(selected_words)
+        if include_number:
+            phrase += str(secrets.randbelow(100))
+
+        return {
+            "phrase": phrase,
+            "dice_data": dice_metadata,
+            "pronounceability": EnterprisePasswordGenerator.calculate_pronounceability(phrase)
+        }
     # Add this method inside the EnterprisePasswordGenerator class
+
     @staticmethod
     def harden_password(password: str) -> str:
         if not password:
@@ -515,14 +568,14 @@ class EnterprisePasswordGenerator:
         secrets.SystemRandom().shuffle(password)
         return ''.join(password)
 
-    @staticmethod
-    def generate_passphrase(num_words=4, separator="-", capitalize=False, include_number=False) -> str:
-        words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima", "mike", "november", "oscar", "papa", "quebec", "romeo",
-                 "sierra", "tango", "uniform", "victor", "whiskey", "xray", "yankee", "zulu", "cipher", "encrypt", "secure", "shield", "guard", "protect", "fortress", "vault", "lock", "token"]
-        selected = [secrets.choice(words) for _ in range(num_words)]
-        if capitalize:
-            selected = [w.capitalize() for w in selected]
-        phrase = separator.join(selected)
-        if include_number:
-            phrase += str(secrets.randbelow(100))
-        return phrase
+    # @staticmethod
+    # def generate_passphrase(num_words=4, separator="-", capitalize=False, include_number=False) -> str:
+    #     words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima", "mike", "november", "oscar", "papa", "quebec", "romeo",
+    #              "sierra", "tango", "uniform", "victor", "whiskey", "xray", "yankee", "zulu", "cipher", "encrypt", "secure", "shield", "guard", "protect", "fortress", "vault", "lock", "token"]
+    #     selected = [secrets.choice(words) for _ in range(num_words)]
+    #     if capitalize:
+    #         selected = [w.capitalize() for w in selected]
+    #     phrase = separator.join(selected)
+    #     if include_number:
+    #         phrase += str(secrets.randbelow(100))
+    #     return phrase

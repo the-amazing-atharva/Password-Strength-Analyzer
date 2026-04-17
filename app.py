@@ -60,6 +60,22 @@ def generate():
 # ==========================================================
 # PASSPHRASE GENERATOR
 # ==========================================================
+# @app.route("/passphrase", methods=["POST"])
+# def passphrase():
+#     data = request.json
+#     words = int(data.get("words", 4))
+#     separator = data.get("separator", "-")
+#     capitalize = bool(data.get("capitalize", False))
+#     include_number = bool(data.get("include_number", False))
+
+#     phrase = EnterprisePasswordGenerator.generate_passphrase(
+#         num_words=words,
+#         separator=separator,
+#         capitalize=capitalize,
+#         include_number=include_number
+#     )
+
+#     return jsonify({"passphrase": phrase})
 @app.route("/passphrase", methods=["POST"])
 def passphrase():
     data = request.json
@@ -68,19 +84,21 @@ def passphrase():
     capitalize = bool(data.get("capitalize", False))
     include_number = bool(data.get("include_number", False))
 
-    phrase = EnterprisePasswordGenerator.generate_passphrase(
+    # This now returns a dictionary with metadata
+    result = EnterprisePasswordGenerator.generate_passphrase(
         num_words=words,
         separator=separator,
         capitalize=capitalize,
         include_number=include_number
     )
 
-    return jsonify({"passphrase": phrase})
-
+    return jsonify(result)
 
 # ==========================================================
 # PWNED PASSWORD / BREACH CHECK
 # ==========================================================
+
+
 @app.route("/pwned", methods=["POST"])
 def pwned():
     data = request.json

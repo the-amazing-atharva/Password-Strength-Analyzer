@@ -345,8 +345,52 @@ async function generatePassphrase() {
       include_number: document.getElementById("includeNumber").checked,
     }),
   });
+
   const data = await res.json();
-  document.getElementById("generatedPassphrase").value = data.passphrase;
+
+  // 1. Update the input field
+  document.getElementById("generatedPassphrase").value = data.phrase;
+
+  // 2. Show the metrics section
+  const metricsSec = document.getElementById("passphraseMetrics");
+  metricsSec.classList.remove("hidden");
+
+  // 3. Update Pronounceability Score
+  const scoreText = document.getElementById("pronounceScore");
+  const scoreBar = document.getElementById("pronounceBar");
+  scoreText.innerText = data.pronounceability + "%";
+  scoreBar.style.width = data.pronounceability + "%";
+
+  // 4. Render Dice Visualizer
+  const diceContainer = document.getElementById("diceVisualizer");
+  diceContainer.innerHTML = ""; // Clear old dice
+
+  const diceIcons = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+  data.dice_data.forEach((item) => {
+    const row = document.createElement("div");
+    row.className =
+      "flex items-center gap-4 bg-white/5 p-2 rounded-lg border border-white/5 hover:bg-white/10 transition-colors";
+
+    // The word
+    const wordLabel = document.createElement("span");
+    wordLabel.className = "w-20 font-bold text-purple-300";
+    wordLabel.innerText = item.word;
+
+    // The dice group
+    const diceGroup = document.createElement("div");
+    diceGroup.className = "flex gap-1 text-2xl text-white/80";
+    item.rolls.forEach((val) => {
+      const die = document.createElement("span");
+      die.innerText = diceIcons[val];
+      die.title = `Roll: ${val}`;
+      diceGroup.appendChild(die);
+    });
+
+    row.appendChild(wordLabel);
+    row.appendChild(diceGroup);
+    diceContainer.appendChild(row);
+  });
 }
 
 // ==========================================================
